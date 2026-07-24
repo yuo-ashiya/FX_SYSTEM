@@ -19,12 +19,13 @@
   table {
     border-collapse: collapse;
     width: 100%;
+    min-width: 1100px;
     background: #fff;
-    font-size: 14px;
+    font-size: 13px;
   }
   th, td {
     border: 1px solid #cfd8dc;
-    padding: 6px 8px;
+    padding: 5px 6px;
     text-align: center;
     white-space: nowrap;
   }
@@ -33,14 +34,17 @@
     color: #fff;
     font-weight: 600;
   }
-  td.pair { text-align: left; font-weight: 600; }
-  input.thresh {
-    width: 64px;
+  td.pair { text-align: left; font-weight: 600; white-space: nowrap; }
+  input.cell {
+    width: 90px;
     padding: 3px;
     border: 1px solid #b0bec5;
     border-radius: 4px;
     text-align: center;
+    font-size: 12px;
   }
+  input.narrow { width: 60px; }
+  input.wide { width: 150px; text-align: left; }
   button {
     padding: 5px 12px;
     border: none;
@@ -61,7 +65,7 @@
 <body>
   <h1>通貨ペア モニタリング</h1>
   <div class="updated" id="updated">読み込み中...</div>
-  <div class="note">上限超え=赤、下限割れ=青 / データはGitHub Actionsが定期取得(目安15分毎)</div>
+  <div class="note">現在値のみ自動取得(GitHub Actionsが目安15分毎)。他の列は手入力・保存でスマホ内に保存されます。上限超え=赤、下限割れ=青</div>
   <div class="error" id="error" style="display:none;"></div>
   <div class="toolbar"><button id="refreshBtn">今すぐ再取得</button></div>
   <div class="wrap">
@@ -70,8 +74,13 @@
       <tr>
         <th>通貨ペア</th>
         <th>現在値</th>
+        <th>日足</th>
+        <th>4時間足</th>
         <th>アラート上限</th>
         <th>アラート下限</th>
+        <th>買SW</th>
+        <th>売SW</th>
+        <th>コメント</th>
         <th>保存</th>
       </tr>
     </thead>
@@ -92,21 +101,32 @@ const DECIMALS = {
   "CHF/TRY": 3, "TRY/JPY": 4, "CHF/MXN": 3, "MXN/JPY": 4
 };
 
-const STORAGE_KEY = "fx_thresholds_v1";
+// 手入力で保存するフィールド一覧
+const FIELDS = ["daily", "h4", "upper", "lower", "buysw", "sellsw", "comment"];
 
-function loadThresholds() {
+const STORAGE_KEY = "fx_rows_v2";
+
+function emptyRow() {
+  return { daily: "", h4: "", upper: "", lower: "", buysw: "", sellsw: "", comment: "" };
+}
+
+function loadRows() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const data = JSON.parse(raw);
+      PAIRS.forEach(p => { if (!data[p]) data[p] = emptyRow(); });
+      return data;
+    }
   } catch (e) {
     console.warn("localStorageが使えない環境のため、設定は保存されません", e);
   }
-  const empty = {};
-  PAIRS.forEach(p => empty[p] = { upper: null, lower: null });
-  return empty;
+  const data = {};
+  PAIRS.forEach(p => data[p] = emptyRow());
+  return data;
 }
 
-function saveThresholds(data) {
+function saveRows(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
@@ -114,7 +134,7 @@ function saveThresholds(data) {
   }
 }
 
-let thresholds = loadThresholds();
+let rows = loadRows();
 
 function fmt(pair, val) {
   if (val === null || val === undefined) return "--";
@@ -126,32 +146,37 @@ function buildTable() {
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
   PAIRS.forEach(pair => {
-    const t = thresholds[pair] || { upper: null, lower: null };
+    const r = rows[pair] || emptyRow();
     const tr = document.createElement("tr");
     tr.dataset.pair = pair;
     tr.innerHTML = `
       <td class="pair">${pair}</td>
       <td class="rateval">--</td>
-      <td><input class="thresh upper" type="number" step="any" placeholder="上限" value="${t.upper ?? ""}"></td>
-      <td><input class="thresh lower" type="number" step="any" placeholder="下限" value="${t.lower ?? ""}"></td>
+      <td><input class="cell wide daily" type="text" value="${r.daily || ""}"></td>
+      <td><input class="cell wide h4" type="text" value="${r.h4 || ""}"></td>
+      <td><input class="cell narrow upper" type="number" step="any" placeholder="上限" value="${r.upper ?? ""}"></td>
+      <td><input class="cell narrow lower" type="number" step="any" placeholder="下限" value="${r.lower ?? ""}"></td>
+      <td><input class="cell narrow buysw" type="text" value="${r.buysw || ""}"></td>
+      <td><input class="cell narrow sellsw" type="text" value="${r.sellsw || ""}"></td>
+      <td><input class="cell wide comment" type="text" value="${r.comment || ""}"></td>
       <td><button class="save">保存</button></td>
     `;
     tbody.appendChild(tr);
 
     tr.querySelector(".save").addEventListener("click", () => {
-      const upperInput = tr.querySelector(".upper");
-      const lowerInput = tr.querySelector(".lower");
-      const upper = upperInput.value === "" ? null : parseFloat(upperInput.value);
-      const lower = lowerInput.value === "" ? null : parseFloat(lowerInput.value);
-      thresholds[pair] = { upper, lower };
-      saveThresholds(thresholds);
+      const newRow = {};
+      FIELDS.forEach(f => {
+        const input = tr.querySelector("." + f);
+        newRow[f] = input.value;
+      });
+      rows[pair] = newRow;
+      saveRows(rows);
       applyColorForRow(tr);
     });
   });
 }
 
 function applyColorForRow(tr) {
-  const pair = tr.dataset.pair;
   const rateCell = tr.querySelector(".rateval");
   const val = rateCell.dataset.val ? parseFloat(rateCell.dataset.val) : null;
   const upperInput = tr.querySelector(".upper");
@@ -176,7 +201,6 @@ function toJstString(epochSeconds) {
 async function refreshRates() {
   const errBox = document.getElementById("error");
   try {
-    // キャッシュを避けるため毎回タイムスタンプ付きで取得
     const res = await fetch("./rates.json?t=" + Date.now());
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
