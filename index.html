@@ -16,10 +16,13 @@
   .updated { font-size: 12px; color: #666; margin: 0 4px 4px; }
   .note { font-size: 11px; color: #888; margin: 0 4px 12px; }
   .error { color: #b00020; font-size: 12px; margin: 0 4px 10px; }
+  .status { font-size: 12px; margin: 0 4px 10px; }
+  .status.ok { color: #1b5e20; }
+  .status.bad { color: #b00020; }
   table {
     border-collapse: collapse;
     width: 100%;
-    min-width: 1100px;
+    min-width: 1200px;
     background: #fff;
     font-size: 13px;
   }
@@ -36,44 +39,106 @@
   }
   td.pair { text-align: left; font-weight: 600; white-space: nowrap; }
   input.cell {
-    width: 90px;
+    width: 80px;
     padding: 3px;
     border: 1px solid #b0bec5;
     border-radius: 4px;
     text-align: center;
     font-size: 12px;
   }
-  input.narrow { width: 60px; }
-  input.wide { width: 150px; text-align: left; }
+  input.narrow { width: 55px; }
+  input.wide { width: 140px; text-align: left; }
   button {
-    padding: 5px 12px;
+    padding: 6px 14px;
     border: none;
     border-radius: 4px;
     background: #1565c0;
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
   }
   button:active { background: #0d47a1; }
-  button.save { padding: 4px 10px; }
+  button.secondary { background: #607d8b; }
   .over    { background: #ffcdd2 !important; }
   .under   { background: #bbdefb !important; }
   .wrap { overflow-x: auto; }
-  .toolbar { margin: 4px 0 12px; }
+  .toolbar { margin: 4px 0 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .settings {
+    background: #fff;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .settings.open { display: block; }
+  .settings label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin: 8px 0 2px;
+  }
+  .settings input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px;
+    border: 1px solid #b0bec5;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .settings .help {
+    font-size: 11px;
+    color: #888;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
   <h1>通貨ペア モニタリング</h1>
   <div class="updated" id="updated">読み込み中...</div>
-  <div class="note">現在値のみ自動取得(GitHub Actionsが目安15分毎)。他の列は手入力・保存でスマホ内に保存されます。上限超え=赤、下限割れ=青</div>
+  <div class="note">現在値のみ自動取得(GitHub Actionsが目安15分毎)。他の列はGitHubリポジトリに直接保存されます。上限超え=赤、下限割れ=青</div>
   <div class="error" id="error" style="display:none;"></div>
-  <div class="toolbar"><button id="refreshBtn">今すぐ再取得</button></div>
+  <div class="status" id="status"></div>
+
+  <div class="toolbar">
+    <button id="saveBtn">GitHubに保存</button>
+    <button id="refreshBtn" class="secondary">現在値を再取得</button>
+    <button id="reloadDataBtn" class="secondary">保存データを再読込</button>
+    <button id="settingsBtn" class="secondary">接続設定</button>
+  </div>
+
+  <div class="settings" id="settingsPanel">
+    <label>GitHubユーザー名(オーナー)</label>
+    <input id="cfgOwner" type="text" placeholder="例: yuo-ashiya">
+    <label>リポジトリ名</label>
+    <input id="cfgRepo" type="text" placeholder="例: FX_SYSTEM">
+    <label>ブランチ名</label>
+    <input id="cfgBranch" type="text" placeholder="main">
+    <label>保存先ファイル名</label>
+    <input id="cfgPath" type="text" placeholder="data.json">
+    <label>Personal Access Token(このスマホの中だけに保存されます)</label>
+    <input id="cfgToken" type="password" placeholder="github_pat_...">
+    <div style="margin-top:10px;">
+      <button id="cfgSaveBtn">設定を保存</button>
+    </div>
+    <div class="help">
+      トークンの作り方: GitHub右上のアイコン → Settings → 左下 Developer settings →
+      Personal access tokens → Fine-grained tokens → Generate new token。
+      Repository access は「Only select repositories」でこのリポジトリだけを選び、
+      Permissions の Contents を「Read and write」にしてください。
+      発行後の文字列(github_pat_...)をこの欄に貼り付けて「設定を保存」を押します。
+      このトークンはこのスマホのブラウザ内にのみ保存され、コードやリポジトリには含まれません。
+    </div>
+  </div>
+
   <div class="wrap">
   <table>
     <thead>
       <tr>
         <th>通貨ペア</th>
         <th>現在値</th>
+        <th>要確認</th>
         <th>日足</th>
         <th>4時間足</th>
         <th>アラート上限</th>
@@ -81,7 +146,6 @@
         <th>買SW</th>
         <th>売SW</th>
         <th>コメント</th>
-        <th>保存</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -101,45 +165,175 @@ const DECIMALS = {
   "CHF/TRY": 3, "TRY/JPY": 4, "CHF/MXN": 3, "MXN/JPY": 4
 };
 
-// 手入力で保存するフィールド一覧
-const FIELDS = ["daily", "h4", "upper", "lower", "buysw", "sellsw", "comment"];
+const FIELDS = ["check", "daily", "h4", "upper", "lower", "buysw", "sellsw", "comment"];
 
-const STORAGE_KEY = "fx_rows_v2";
+const CONFIG_KEY = "fx_gh_config_v1";
+const DEFAULT_CONFIG = { owner: "yuo-ashiya", repo: "FX_SYSTEM", branch: "main", path: "data.json", token: "" };
 
-function emptyRow() {
-  return { daily: "", h4: "", upper: "", lower: "", buysw: "", sellsw: "", comment: "" };
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if (raw) return Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw));
+  } catch (e) { /* ignore */ }
+  return Object.assign({}, DEFAULT_CONFIG);
 }
 
-function loadRows() {
+function saveConfig(cfg) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      PAIRS.forEach(p => { if (!data[p]) data[p] = emptyRow(); });
-      return data;
-    }
-  } catch (e) {
-    console.warn("localStorageが使えない環境のため、設定は保存されません", e);
-  }
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  } catch (e) { /* ignore */ }
+}
+
+let config = loadConfig();
+let currentSha = null; // data.json の最新sha(更新時の競合防止に使用)
+
+function emptyRow() {
+  const r = {};
+  FIELDS.forEach(f => r[f] = "");
+  return r;
+}
+
+function emptyRows() {
   const data = {};
   PAIRS.forEach(p => data[p] = emptyRow());
   return data;
 }
 
-function saveRows(data) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.warn("localStorageへの保存に失敗しました", e);
-  }
-}
-
-let rows = loadRows();
+let rows = emptyRows();
 
 function fmt(pair, val) {
   if (val === null || val === undefined) return "--";
   const d = DECIMALS[pair] !== undefined ? DECIMALS[pair] : 4;
   return Number(val).toFixed(d);
+}
+
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+function base64ToUtf8(b64) {
+  const binary = atob(b64.replace(/\n/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+function setStatus(msg, ok) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = "status " + (ok ? "ok" : "bad");
+}
+
+function apiUrl() {
+  return `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${encodeURIComponent(config.path)}`;
+}
+
+async function loadDataFromGitHub() {
+  if (!config.token) {
+    // トークン未設定時は、公開されている静的ファイルを読むだけ(閲覧のみ)
+    try {
+      const res = await fetch("./" + config.path + "?t=" + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        applyLoadedRows(data);
+        setStatus("保存データを読み込みました(閲覧のみ。書き込みには接続設定でトークンが必要です)", true);
+      } else {
+        setStatus("まだ保存データがありません。接続設定でトークンを設定して保存してください。", false);
+      }
+    } catch (e) {
+      setStatus("保存データの読み込みに失敗しました: " + e.message, false);
+    }
+    buildTable();
+    return;
+  }
+
+  try {
+    const res = await fetch(apiUrl() + "?ref=" + config.branch, {
+      headers: {
+        "Authorization": "Bearer " + config.token,
+        "Accept": "application/vnd.github+json"
+      }
+    });
+    if (res.status === 404) {
+      currentSha = null;
+      rows = emptyRows();
+      setStatus("GitHub上にまだ保存データがありません(初回保存で作成されます)", true);
+    } else if (!res.ok) {
+      const t = await res.text();
+      throw new Error("HTTP " + res.status + " " + t.slice(0, 120));
+    } else {
+      const json = await res.json();
+      currentSha = json.sha;
+      const content = base64ToUtf8(json.content);
+      applyLoadedRows(JSON.parse(content));
+      setStatus("GitHubから読み込みました", true);
+    }
+  } catch (e) {
+    setStatus("GitHubからの読み込みに失敗しました: " + e.message, false);
+  }
+  buildTable();
+}
+
+function applyLoadedRows(data) {
+  rows = emptyRows();
+  PAIRS.forEach(p => {
+    if (data[p]) rows[p] = Object.assign(emptyRow(), data[p]);
+  });
+}
+
+function collectRowsFromDOM() {
+  const data = {};
+  document.querySelectorAll("tbody tr").forEach(tr => {
+    const pair = tr.dataset.pair;
+    const r = {};
+    FIELDS.forEach(f => {
+      const input = tr.querySelector("." + f);
+      r[f] = input ? input.value : "";
+    });
+    data[pair] = r;
+  });
+  return data;
+}
+
+async function saveToGitHub() {
+  if (!config.token) {
+    setStatus("トークンが未設定です。「接続設定」からPersonal Access Tokenを設定してください。", false);
+    openSettings();
+    return;
+  }
+  setStatus("保存中...", true);
+  const data = collectRowsFromDOM();
+  const body = {
+    message: "Update FX dashboard data",
+    content: utf8ToBase64(JSON.stringify(data, null, 2)),
+    branch: config.branch
+  };
+  if (currentSha) body.sha = currentSha;
+
+  try {
+    const res = await fetch(apiUrl(), {
+      method: "PUT",
+      headers: {
+        "Authorization": "Bearer " + config.token,
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error("HTTP " + res.status + " " + t.slice(0, 200));
+    }
+    const json = await res.json();
+    currentSha = json.content.sha;
+    rows = data;
+    setStatus("GitHubに保存しました(" + new Date().toLocaleTimeString("ja-JP") + ")", true);
+  } catch (e) {
+    setStatus("保存に失敗しました: " + e.message, false);
+  }
 }
 
 function buildTable() {
@@ -152,6 +346,7 @@ function buildTable() {
     tr.innerHTML = `
       <td class="pair">${pair}</td>
       <td class="rateval">--</td>
+      <td><input class="cell narrow check" type="text" value="${r.check || ""}"></td>
       <td><input class="cell wide daily" type="text" value="${r.daily || ""}"></td>
       <td><input class="cell wide h4" type="text" value="${r.h4 || ""}"></td>
       <td><input class="cell narrow upper" type="number" step="any" placeholder="上限" value="${r.upper ?? ""}"></td>
@@ -159,30 +354,20 @@ function buildTable() {
       <td><input class="cell narrow buysw" type="text" value="${r.buysw || ""}"></td>
       <td><input class="cell narrow sellsw" type="text" value="${r.sellsw || ""}"></td>
       <td><input class="cell wide comment" type="text" value="${r.comment || ""}"></td>
-      <td><button class="save">保存</button></td>
     `;
     tbody.appendChild(tr);
-
-    tr.querySelector(".save").addEventListener("click", () => {
-      const newRow = {};
-      FIELDS.forEach(f => {
-        const input = tr.querySelector("." + f);
-        newRow[f] = input.value;
-      });
-      rows[pair] = newRow;
-      saveRows(rows);
-      applyColorForRow(tr);
+    tr.querySelectorAll(".upper, .lower").forEach(inp => {
+      inp.addEventListener("input", () => applyColorForRow(tr));
     });
   });
+  refreshRates();
 }
 
 function applyColorForRow(tr) {
   const rateCell = tr.querySelector(".rateval");
   const val = rateCell.dataset.val ? parseFloat(rateCell.dataset.val) : null;
-  const upperInput = tr.querySelector(".upper");
-  const lowerInput = tr.querySelector(".lower");
-  const upper = upperInput.value;
-  const lower = lowerInput.value;
+  const upper = tr.querySelector(".upper").value;
+  const lower = tr.querySelector(".lower").value;
 
   rateCell.classList.remove("over", "under");
   if (val === null || isNaN(val)) return;
@@ -206,7 +391,7 @@ async function refreshRates() {
     const data = await res.json();
 
     document.getElementById("updated").textContent =
-      "最終更新: " + toJstString(data.updated_at_epoch);
+      "現在値の最終更新: " + toJstString(data.updated_at_epoch);
     errBox.style.display = "none";
 
     document.querySelectorAll("tbody tr").forEach(tr => {
@@ -219,14 +404,44 @@ async function refreshRates() {
     });
   } catch (e) {
     errBox.style.display = "block";
-    errBox.textContent = "rates.jsonの取得に失敗しました: " + e.message +
-      "(GitHub Actionsがまだ一度も実行されていない可能性があります)";
+    errBox.textContent = "rates.jsonの取得に失敗しました: " + e.message;
   }
 }
 
-buildTable();
-refreshRates();
+function openSettings() {
+  document.getElementById("settingsPanel").classList.add("open");
+}
+
+function initSettingsPanel() {
+  document.getElementById("cfgOwner").value = config.owner;
+  document.getElementById("cfgRepo").value = config.repo;
+  document.getElementById("cfgBranch").value = config.branch;
+  document.getElementById("cfgPath").value = config.path;
+  document.getElementById("cfgToken").value = config.token;
+
+  document.getElementById("settingsBtn").addEventListener("click", () => {
+    document.getElementById("settingsPanel").classList.toggle("open");
+  });
+
+  document.getElementById("cfgSaveBtn").addEventListener("click", () => {
+    config = {
+      owner: document.getElementById("cfgOwner").value.trim(),
+      repo: document.getElementById("cfgRepo").value.trim(),
+      branch: document.getElementById("cfgBranch").value.trim() || "main",
+      path: document.getElementById("cfgPath").value.trim() || "data.json",
+      token: document.getElementById("cfgToken").value.trim()
+    };
+    saveConfig(config);
+    document.getElementById("settingsPanel").classList.remove("open");
+    loadDataFromGitHub();
+  });
+}
+
+initSettingsPanel();
+loadDataFromGitHub();
+document.getElementById("saveBtn").addEventListener("click", saveToGitHub);
 document.getElementById("refreshBtn").addEventListener("click", refreshRates);
+document.getElementById("reloadDataBtn").addEventListener("click", loadDataFromGitHub);
 </script>
 </body>
 </html>
