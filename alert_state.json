@@ -1,0 +1,14 @@
+{
+  "USD/JPY": "normal",
+  "EUR/JPY": "normal",
+  "GBP/JPY": "normal",
+  "AUD/JPY": "normal",
+  "EUR/USD": "normal",
+  "GBP/USD": "over",
+  "AUD/USD": "normal",
+  "EUR/GBP": "normal",
+  "CHF/TRY": "normal",
+  "TRY/JPY": "normal",
+  "CHF/MXN": "normal",
+  "MXN/JPY": "normal"
+}
