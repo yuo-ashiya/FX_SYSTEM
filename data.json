@@ -34,13 +34,13 @@
     "daily": "111-114",
     "h4": "112",
     "upper": "",
-    "lower": "",
+    "lower": "112",
     "buysw": "105",
     "sellsw": "-105",
     "comment": ""
   },
   "EUR/USD": {
-    "check": "",
+    "check": "〇",
     "daily": "1.13-1.2",
     "h4": "上昇トリガー待ち",
     "upper": "1.145",
@@ -50,7 +50,7 @@
     "comment": "買いはマイナスSW"
   },
   "GBP/USD": {
-    "check": "",
+    "check": "〇",
     "daily": "1.32-1.38",
     "h4": "上昇トリガー待ち",
     "upper": "1.32",
@@ -60,7 +60,7 @@
     "comment": ""
   },
   "AUD/USD": {
-    "check": "",
+    "check": "〇",
     "daily": "0.69-0.73",
     "h4": "レンジ上昇中",
     "upper": "",
@@ -80,10 +80,10 @@
     "comment": "買いはマイナスSW"
   },
   "CHF/TRY": {
-    "check": "",
+    "check": "〇",
     "daily": "長期上昇",
     "h4": "58.6超えで売り増し",
-    "upper": "",
+    "upper": "58.5",
     "lower": "",
     "buysw": "",
     "sellsw": "",
@@ -100,21 +100,21 @@
     "comment": ""
   },
   "CHF/MXN": {
-    "check": "",
+    "check": "〇",
     "daily": "下降トレンド",
     "h4": "21.6超えで売り準備",
-    "upper": "",
+    "upper": "21.6",
     "lower": "",
     "buysw": "",
     "sellsw": "",
     "comment": ""
   },
   "MXN/JPY": {
-    "check": "",
+    "check": "〇",
     "daily": "9.2-9.37",
     "h4": "9.24以下で確認",
     "upper": "",
-    "lower": "",
+    "lower": "9.24",
     "buysw": "14",
     "sellsw": "-14",
     "comment": ""
