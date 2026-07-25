@@ -1,0 +1,122 @@
+{
+  "USD/JPY": {
+    "check": "",
+    "daily": "ＤＤＤ",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "EUR/JPY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "GBP/JPY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "AUD/JPY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "EUR/USD": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "GBP/USD": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "AUD/USD": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "EUR/GBP": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "CHF/TRY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "TRY/JPY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "CHF/MXN": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  },
+  "MXN/JPY": {
+    "check": "",
+    "daily": "",
+    "h4": "",
+    "upper": "",
+    "lower": "",
+    "buysw": "",
+    "sellsw": "",
+    "comment": ""
+  }
+}
