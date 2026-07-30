@@ -7,8 +7,8 @@
   "GBP/USD": "normal",
   "AUD/USD": "normal",
   "EUR/GBP": "normal",
-  "CHF/TRY": "normal",
+  "CHF/TRY": "over",
   "TRY/JPY": "normal",
   "CHF/MXN": "normal",
-  "MXN/JPY": "normal"
+  "MXN/JPY": "under"
 }
