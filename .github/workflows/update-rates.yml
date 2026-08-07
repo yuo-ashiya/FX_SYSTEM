@@ -2,8 +2,8 @@ name: Update FX Rates
 
 on:
   schedule:
-    # 15分おきに実行(GitHub側の負荷状況により数分遅れることがあります)
-    - cron: '*/15 * * * *'
+    # 毎時 8分, 23分, 38分, 53分 に実行(ちょうどの時刻は世界中のcronが集中し遅延しやすいため、あえてずらしている)
+    - cron: '8,23,38,53 * * * *'
   workflow_dispatch: {}   # Actionsタブから手動実行もできるようにする
 
 permissions:
