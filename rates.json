@@ -1,18 +1,18 @@
 {
   "rates": {
-    "USD/JPY": null,
-    "EUR/JPY": null,
+    "USD/JPY": 158.94000244140625,
+    "EUR/JPY": 185.61251418553002,
     "GBP/JPY": null,
-    "AUD/JPY": null,
+    "AUD/JPY": 114.03357359571964,
     "EUR/USD": 1.1678149700164795,
-    "GBP/USD": 1.3647964000701904,
+    "GBP/USD": null,
     "AUD/USD": 0.7174630165100098,
-    "EUR/GBP": 0.8556697320980768,
+    "EUR/GBP": null,
     "CHF/TRY": 59.98026833551332,
-    "TRY/JPY": null,
+    "TRY/JPY": 3.3088649586697314,
     "CHF/MXN": 21.09659861150744,
-    "MXN/JPY": null
+    "MXN/JPY": 9.407516906480424
   },
-  "updated_at_utc": "2026-08-23 08:15:32",
-  "updated_at_epoch": 1787472932
+  "updated_at_utc": "2026-08-23 08:54:33",
+  "updated_at_epoch": 1787475273
 }
