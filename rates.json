@@ -10,9 +10,9 @@
     "EUR/GBP": 0.8597443765991455,
     "CHF/TRY": 59.86402891436736,
     "TRY/JPY": 3.225707042279259,
-    "CHF/MXN": null,
-    "MXN/JPY": null
+    "CHF/MXN": 20.888751358602754,
+    "MXN/JPY": 9.244392655799253
   },
-  "updated_at_utc": "2026-09-06 08:53:14",
-  "updated_at_epoch": 1788684794
+  "updated_at_utc": "2026-09-06 12:40:18",
+  "updated_at_epoch": 1788698418
 }
