@@ -9,6 +9,6 @@
   "EUR/GBP": "normal",
   "CHF/TRY": "over",
   "TRY/JPY": "normal",
-  "CHF/MXN": "over",
+  "CHF/MXN": "normal",
   "MXN/JPY": "under"
 }
